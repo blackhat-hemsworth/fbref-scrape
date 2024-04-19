@@ -1,0 +1,81 @@
+---
+title: "A Look at Progressive Passing"
+output: html_document
+date: "`r Sys.Date()`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(tidyverse)
+
+match_logs <- read.csv("joined_df.csv")
+match_logs <- match_logs %>% 
+                mutate(Player = gsub("-"," ",basename(Player)),
+                       initials = gsub("(?<=[A-Z])[^A-Z]+", "", Player, perl = TRUE),
+                       Nation = gsub("-"," ",basename(Nation)),
+                       Squad = gsub("-"," ",basename(Squad_x)),
+                       squad = substr(Squad,1,nchar(Squad)-6),
+                       season_pos = factor(substr(Pos_x,1,2), levels = c("GK","DF","MF","FW")),
+                       season_completions = as.numeric(Cmp_x),
+                       season_attempts = as.numeric(Att_y),
+                       season_prog_passes = as.numeric(PrgP_x),
+                       completions = as.numeric(Cmp_y),
+                       attempts = as.numeric(Att_y),
+                       progressive_passes = as.numeric(PrgP_y),
+                       tot_dist_match = as.numeric(TotDist_y),
+                       prog_dist_match = as.numeric(PrgDist_y),
+                       p_cat = case_when(
+                                  grepl("B",Pos_y) ~ "Defender",
+                                  grepl("M",Pos_y) ~ "Midfielder",
+                                  grepl("W",Pos_y) ~ "Forward",
+                                  Pos_y == "GK" ~"Goalkeeper"
+                               )
+                      ) %>% 
+                filter(Cmp_y != "" & !is.na(prog_dist_match) & season_completions > 100) 
+
+city_logs <- match_logs %>% filter(squad == "Manchester City")
+season_perf <- match_logs %>% 
+                select(-X,-Date,-Day,-Comp,-Round,-Venue,-Result,-Opponent,-Start,-Min,-Match.Report,-contains("_y"),
+                       -completions,-attempts,-progressive_passes,-tot_dist_match,-prog_dist_match,-p_cat) %>% 
+                distinct()
+
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+
+city_logs %>% ggplot(aes(x = completions, y = progressive_passes/completions, label = initials, color = p_cat)) + 
+                geom_text() + #alpha=.5) + 
+                #coord_fixed() + 
+                theme_bw() +
+                theme(legend.position = "bottom")
+
+city_logs %>% ggplot(aes(x = prog_dist_match/progressive_passes, y = progressive_passes/completions, label = initials, color = p_cat)) + 
+                geom_text() + #alpha=.5) + 
+                #coord_fixed() + 
+                theme_bw() +
+                theme(legend.position = "bottom")
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r}
+
+season_perf %>% ggplot(aes(x = interaction(season_pos,squad),y = season_prog_passes/season_completions , fill = season_pos,label = initials, 
+                           size = season_completions)) + 
+                geom_label(alpha=.5)+ 
+                theme_minimal() +
+                theme(legend.position = "bottom",
+                      axis.text.x = element_text(angle=90)) 
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
