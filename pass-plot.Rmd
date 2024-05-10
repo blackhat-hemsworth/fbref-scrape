@@ -15,10 +15,17 @@ match_logs <- match_logs %>%
                        Nation = gsub("-"," ",basename(Nation)),
                        Squad = gsub("-"," ",basename(Squad_x)),
                        squad = substr(Squad,1,nchar(Squad)-6),
+                       squad_rank = paste(Rk_x," - ", squad),
                        season_pos = factor(substr(Pos_x,1,2), levels = c("GK","DF","MF","FW")),
                        season_completions = as.numeric(Cmp_x),
-                       season_attempts = as.numeric(Att_y),
+                       season_attempts = as.numeric(Att_x),
                        season_prog_passes = as.numeric(PrgP_x),
+                       season_short_att = Att_x.1,
+                       season_short_pct = Cmp._x.1,
+                       season_med_att = Att_x.2,
+                       season_med_pct = Cmp._x.2,
+                       season_long_att = Att_x.3,
+                       season_long_pct = Cmp._x.3,
                        completions = as.numeric(Cmp_y),
                        attempts = as.numeric(Att_y),
                        progressive_passes = as.numeric(PrgP_y),
@@ -69,12 +76,37 @@ You can also embed plots, for example:
 
 ```{r}
 
-season_perf %>% ggplot(aes(x = interaction(season_pos,squad),y = season_prog_passes/season_completions , fill = season_pos,label = initials, 
+season_perf %>% ggplot(aes(x = factor(Rk_x),y = season_prog_passes/season_completions , fill = season_pos,label = initials, 
                            size = season_completions)) + 
                 geom_label(alpha=.5)+ 
+                scale_x_discrete(breaks = unique(season_perf$Rk_x), labels = unique(season_perf$squad_rank)) +
                 theme_minimal() +
                 theme(legend.position = "bottom",
-                      axis.text.x = element_text(angle=90)) 
+                      axis.text.x = element_text(angle=90))  
+
+season_perf %>% ggplot(aes(x = factor(Rk_x),y = season_short_att/season_attempts , fill = season_pos,label = initials, 
+                           size = season_short_att)) + 
+                geom_label(aes(alpha=season_short_pct))+ 
+                scale_x_discrete(breaks = unique(season_perf$Rk_x), labels = unique(season_perf$squad_rank)) +
+                theme_minimal() +
+                theme(legend.position = "bottom",
+                      axis.text.x = element_text(angle=90))  
+
+season_perf %>% ggplot(aes(x = factor(Rk_x),y = season_med_att/season_attempts , fill = season_pos,label = initials, 
+                           size = season_med_att)) + 
+                geom_label(aes(alpha=season_med_pct))+ 
+                scale_x_discrete(breaks = unique(season_perf$Rk_x), labels = unique(season_perf$squad_rank)) +
+                theme_minimal() +
+                theme(legend.position = "bottom",
+                      axis.text.x = element_text(angle=90))  
+
+season_perf %>% ggplot(aes(x = factor(Rk_x),y = season_long_att/season_attempts , fill = season_pos,label = initials, 
+                           size = season_long_att)) + 
+                geom_label(aes(alpha=season_long_pct))+ 
+                scale_x_discrete(breaks = unique(season_perf$Rk_x), labels = unique(season_perf$squad_rank)) +
+                theme_minimal() +
+                theme(legend.position = "bottom",
+                      axis.text.x = element_text(angle=90))  
 
 ```
 
